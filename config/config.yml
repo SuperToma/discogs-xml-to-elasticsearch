@@ -1,0 +1,138 @@
+app:
+  download_dir: "./downloads/"
+
+elasticsearch:
+  host: "localhost"
+  scheme: "http"
+  port: 9200
+  indexes:
+    settings:
+      number_of_shards: 1
+      number_of_replicas: 0
+      index:
+        analysis:
+          filter: null,
+          analyzer:
+            edge_ngram_analyzer:
+              filter:
+                - 'lowercase'
+              tokenizer: "edge_ngram_tokenizer"
+            edge_ngram_search_analyzer:
+              tokenizer: "lowercase"
+          tokenizer:
+            edge_ngram_tokenizer:
+              type: "edge_ngram"
+              min_gram: 2
+              max_gram: 30
+              token_chars:
+                - "letter"
+
+discogs:
+  prefix_url: "https://discogs-data.s3-us-west-2.amazonaws.com/data/"
+
+types:
+  masters:
+    id: "$.id"
+    artists: "artists[0].artist"
+    data_quality: "data_quality[0].artist"
+    genres: "genres/genre//text()"
+    images: "images[0].image"
+    main_release: "main_release[0]"
+    notes: "notes"
+    styles: "styles[0].style"
+    title: "title[0]"
+    videos: "videos[0].video"
+    year: "year[0]"
+  artists:
+    id: "id[0]"
+    images:
+    name: "name[0]"
+    realname: "realname[0]"
+    profile: "profile[0]"
+    namevariations: "namevariations[0].name"
+    aliases: "aliases[0].name"
+    url: "url[0]"
+    urls: "urls[0]"
+    data_quality: "data_quality[0]"
+    groups: "groups[0].name"
+    members: "members[0]"
+  releases:
+    id: "string(@id)"
+    status: "string(@status)"
+    released: "string(released)"
+    master_id: "string(master_id)"
+#    artists:
+#      xpath: "artists/artist"
+#      id: "string(id)"
+#      name: "string(name)"
+#      anv: "string(anv)"
+#      join: "string(join)"
+#      role: "string(role)"
+#      tracks: "string(tracks)"
+    #extraartists:
+    #  xpath: "extraartists/artist"
+    #  id: "string(id)"
+    #  name: "string(name)"
+    #  anv: "string(anv)"
+    #  join: "string(join)"
+    #  role: "string(role)"
+    #  tracks: "string(tracks)"
+    #labels:
+    #  xpath: "labels/label"
+    #  name: "string(@name)"
+    #  catno: "string(@catno)"
+    #formats:
+    #  xpath: "formats/format"
+    #  name: "string(@name)"
+    #  quantity: "string(@qty)"
+    #  text: "string(@text)"
+    #  descriptions: "descriptions/description/text()"
+    #data_quality: "string(data_quality)"
+#    tracklist:
+#      xpath: "tracklist/track"
+#      position: "string(position)"
+#      title: "string(title)"
+#      duration: "string(duration)"
+#      artists:
+#        xpath: "artist"
+#        toto: "tata"
+#        id: "string(id)"
+#        name: "string(name)"
+#        anv: "string(anv)"
+#        join: "string(join)"
+#        role: "string(role)"
+#        tracks: "string(tracks)"
+      #extraartists:
+      #  xpath: "extraartists"
+      #  id: "string(id)"
+      #  name: "string(name)"
+      #  anv: "string(anv)"
+      #  join: "string(join)"
+      #  role: "string(role)"
+      #  tracks: "string(tracks)"
+    #identifiers:
+    #  xpath: "identifiers/identifier"
+    #  description: "@description"
+    #  type: "string(@type)"
+    #  value: "string(@value)"
+#    genres: "genres/genre//text()"
+    #images: ~
+    notes: "string(notes)"
+    styles: "styles/style//text()"
+    country: "string(country)"
+    title: "string(title)"
+    #videos:
+    #  xpath: "videos/video"
+    #  duration: "@duration"
+    #  embed: "@embed"
+    #  src: "string(@src)"
+    #  title: "string(title)"
+    #  description: "string(description)"
+    #companies:
+    #  xpath: "companies/company"
+    #  id: "string(id)"
+    #  name: "string(name)"
+    #  catno: "string(catno)"
+    #  entity-type: "string(entity_type)"
+    #  entity_type_name: "string(entity_type_name)"
+    #  resource_url: "string(ressource_url)"

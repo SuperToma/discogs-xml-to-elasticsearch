@@ -1,13 +1,14 @@
 import argparse
 import gzip
 import yaml
+import asyncio
 
 from clients import ESClient
 from parsers import XMLParser
 from processors import ElementCounter, ElementImporter
 
 
-if __name__ == "__main__":
+async def main():
     # Load config
     with open("./config/config.yml", 'r') as yml_stream:
         config = yaml.safe_load(yml_stream)
@@ -32,21 +33,21 @@ if __name__ == "__main__":
         mapping = yaml.safe_load(yml_stream)
 
     es_client = ESClient(config["elasticsearch"])
-    es_client.prepare_index(args.type, mapping)
+    await es_client.ping()
+    await es_client.prepare_index(args.type, mapping)
 
     # 1/ Count nb elements in the XML file if no nb-objects given (can be long)
     nb_objects = args.nb_objects
     if not nb_objects:
         processor = ElementCounter(args.type)
         parser = XMLParser(type=args.type)
-        parser.parse(file_stream, processor)
         nb_objects = parser.get_nb_processed()
 
     # 2/ Import elements in ES
-    processor = ElementImporter(
-        args.type,
-        config["types"][args.type],
-        total=nb_objects
-    )
-    parser = XMLParser(args.type)
-    parser.parse(file_stream, processor)
+    parser = XMLParser(args.type, config["types"][args.type], file_stream)
+
+    processor = ElementImporter(parser, es_client)
+    await processor.process(total=nb_objects)
+
+loop = asyncio.get_event_loop()
+loop.run_until_complete(main())

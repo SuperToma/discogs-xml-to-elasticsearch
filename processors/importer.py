@@ -1,63 +1,44 @@
-from copy import deepcopy
-import json
 from tqdm import tqdm
-from lxml import etree
-from lxml.etree import Element, XPath
+from elasticsearch.helpers import async_streaming_bulk
+
+from clients import ESClient
+from parsers import XMLParser
 
 from processors.processor import Processor
 
+
 class ElementImporter(Processor):
-    conf_fields_xpath: dict
-    nb_processed: int
-    type: str
 
-    def __init__(self, type: str, conf_fields_xpath: dict, **kwargs):
-        self.nb_processed = 0
-        self.type = type
-        self.conf_fields_xpath = conf_fields_xpath
-        self.tqdm = tqdm(
-            unit=f" {type}",
-            mininterval=1,
-            total=kwargs.get("total"),
-        )
+    es_client: ESClient
+    parser: XMLParser
 
-    def process(self, tree_element: Element):
-        self.nb_processed += 1
-        self.tqdm.update()
-        #print("dump : ")
-        #etree.dump(tree_element)
-        #print(">>>")
-        es_fields_values = self.get_fields_values(
-            self,
-            tree_element,
-            self.conf_fields_xpath
-        )
-        #toto = json.dumps(es_fields_values, indent=4)
-        #print(toto)
-        #quit()
+    max_nb_doc_per_bulk = 500
+    max_bulk_size = 204857600 # 100MB
 
-    def get_nb_processed(self):
-        return self.nb_processed
+    def __init__(self, parser: XMLParser, es_client: ESClient):
+        self.es_client = es_client
+        self.parser = parser
+        self.tqdm = tqdm(unit=f" {self.parser.type}", mininterval=1)
 
-    @staticmethod
-    def get_fields_values(self, tree_element, conf_fields_xpath):
-        fields_xpath = {}
+    async def process(self, **kwargs):
+        self.tqdm.total = kwargs.get("total")
 
-        for field_name, xpath in conf_fields_xpath.items():
-            if isinstance(xpath, dict):
-                children = tree_element.xpath(xpath["xpath"])
+        async for ok, result in async_streaming_bulk(
+            self.es_client.es,
+            self.get_next_doc(),
+            chunk_size=self.max_nb_doc_per_bulk,
+            max_chunk_bytes=self.max_bulk_size
+        ):
+            self.tqdm.update()
+            action, result = result.popitem()
+            if not ok:
+                print("failed to %s document %s" % ())
 
-                field_value = []
-                for child in children:
-                    new_xpath = deepcopy(xpath)
-                    del new_xpath["xpath"]
-
-                    field_value.append(self.get_fields_values(self, child, new_xpath))
-
-                fields_xpath[field_name] = field_value
-                continue
-
-            field_value = tree_element.xpath(xpath)
-            fields_xpath[field_name] = field_value
-        return fields_xpath
-
+    async def get_next_doc(self):
+        # 1/ get the next XML element
+        for event, element in self.parser.context:
+            # 2/ get the XML element as a dict for indexing
+            doc = self.parser.get_values_from_tree_element(element, self.parser.xpaths_config)
+            # 3/ add bulk envelop around the dict
+            yield self.es_client.get_doc_single_bulk(doc)
+            element.clear()

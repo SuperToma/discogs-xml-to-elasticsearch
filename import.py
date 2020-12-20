@@ -36,16 +36,16 @@ async def main():
     await es_client.ping()
     await es_client.prepare_index(args.type, mapping)
 
+    parser = XMLParser(args.type, config["types"][args.type], file_stream)
+
     # 1/ Count nb elements in the XML file if no nb-objects given (can be long)
     nb_objects = args.nb_objects
     if not nb_objects:
-        processor = ElementCounter(args.type)
-        parser = XMLParser(type=args.type)
+        processor = ElementCounter(parser)
+        processor.process()
         nb_objects = parser.get_nb_processed()
 
     # 2/ Import elements in ES
-    parser = XMLParser(args.type, config["types"][args.type], file_stream)
-
     processor = ElementImporter(parser, es_client)
     await processor.process(total=nb_objects)
 

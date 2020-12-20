@@ -4,16 +4,11 @@ from elasticsearch.helpers import async_streaming_bulk
 from clients import ESClient
 from parsers import XMLParser
 
-from processors.processor import Processor
 
-
-class ElementImporter(Processor):
+class ElementImporter():
 
     es_client: ESClient
     parser: XMLParser
-
-    max_nb_doc_per_bulk = 500
-    max_bulk_size = 204857600 # 100MB
 
     def __init__(self, parser: XMLParser, es_client: ESClient):
         self.es_client = es_client
@@ -24,10 +19,7 @@ class ElementImporter(Processor):
         self.tqdm.total = kwargs.get("total")
 
         async for ok, result in async_streaming_bulk(
-            self.es_client.es,
-            self.get_next_doc(),
-            chunk_size=self.max_nb_doc_per_bulk,
-            max_chunk_bytes=self.max_bulk_size
+            self.es_client.es, self.get_next_doc()
         ):
             self.tqdm.update()
             action, result = result.popitem()

@@ -10,11 +10,11 @@ Many problems with NodeJS:
 
 ```
 pip3 install -r requirements.txt
-python3.7 import.py -d 20201101 -t releases
+python3 import.py -d 20201101 -t releases
 ````
 
 The number of XML elements can be long,
 you can specify the number to parser to avoir calculation:
 ```
-python3.7 import.py -d 20201101 -t releases -n 13203624
+python3 import.py -d 20201101 -t releases -n 13203624
 ```

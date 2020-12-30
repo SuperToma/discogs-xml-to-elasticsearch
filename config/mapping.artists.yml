@@ -17,10 +17,11 @@ properties:
     type: "keyword"
     index: false
   urls:
-    properties:
-      url:
-        type: "keyword"
-        index: false
+    type: "keyword"
+    index: false
+  groups:
+    type: "keyword"
+    index: false
   namevariations:
     type: "keyword"
     index: false
@@ -33,26 +34,6 @@ properties:
         type: "integer"
         index: false
       name:
-        type: "keyword"
-        index: false
-  images:
-    properties:
-      width:
-        type: "integer"
-        index: false
-      object_type_name:
-        type: "keyword"
-        index: false
-      height:
-        type: "integer"
-        index: false
-      uri150:
-        type: "keyword"
-        index: false
-      imageType:
-        type: "keyword"
-        index: false
-      uri:
         type: "keyword"
         index: false
   videos:

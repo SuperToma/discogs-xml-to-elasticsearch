@@ -1,11 +1,14 @@
+from datetime import datetime
 import argparse
-import gzip
-import yaml
 import asyncio
+import yaml
 
-from clients import ESClient
-from parsers import XMLParser
-from processors import ElementCounter, ElementImporter
+from lib import (
+    Downloader, DownloadError,
+    ESClient,
+    XMLParser,
+    ElementImporter
+)
 
 
 async def main():
@@ -13,41 +16,61 @@ async def main():
     with open("./config/config.yml", 'r') as yml_stream:
         config = yaml.safe_load(yml_stream)
 
+    valid_types = config["types"].keys()
+
     # Script arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument("-d", "--date", type=int, required=True)
-    parser.add_argument("-n", "--nb-objects", type=int, required=False)
+    parser.add_argument("-d", "--date", type=int, required=False)
     parser.add_argument(
-        "-t", "--type",
-        type=str,
-        required=True,
-        choices=config["types"].keys()
+        "-t", "--type", type=str, required=False, choices=valid_types
     )
     args = parser.parse_args()
 
-    file_stream = gzip.open(
-        f"{config['app']['download_dir']}discogs_{args.date}_{args.type}.xml.gz"
-    )
+    types = [args.type] if args.type else valid_types
+    if args.date:
+        date = str(args.date)
+    else:
+        date = datetime.today().strftime('%Y%m01')
+        print(
+        f"No date option specified (--date or -d), "
+        f"using the first day of current month: {date}")
 
-    with open(f"./config/mapping.{args.type}.yml", 'r') as yml_stream:
-        mapping = yaml.safe_load(yml_stream)
+    download_dir = config['app']['download_dir']
 
-    es_client = ESClient(config["elasticsearch"])
-    await es_client.ping()
-    await es_client.prepare_index(args.type, mapping)
+    for type in types:
+        # 1/ Create index
+        global es_client # global for removing index if script crashes
+        es_client = ESClient(type, config)
+        await es_client.ping()
+        await es_client.prepare_index()
 
-    parser = XMLParser(args.type, config["types"][args.type], file_stream)
+        # 2/ Download file
+        downloader = Downloader(type, date, config)
+        downloader.start()
 
-    # 1/ Count nb elements in the XML file if no nb-objects given (can be long)
-    nb_objects = args.nb_objects
-    if not nb_objects:
-        processor = ElementCounter(parser)
-        processor.process()
-        nb_objects = parser.get_nb_processed()
+        # 3/ Import elements in ES
+        parser = XMLParser(type, date, config)
+        processor = ElementImporter(parser, es_client)
+        await processor.process()
 
-    # 2/ Import elements in ES
-    processor = ElementImporter(parser, es_client)
-    await processor.process(total=nb_objects)
+        # 4/ Last steps
+        await es_client.refresh_index()
+        await es_client.switch_alias()
+
+    print("Import finished.")
+    await es_client.close()
 
 loop = asyncio.get_event_loop()
-loop.run_until_complete(main())
+
+try:
+    loop.run_until_complete(main())
+except (DownloadError, KeyboardInterrupt) as e:
+    print(str(e))
+    loop.run_until_complete(es_client.remove_index())
+except Exception as e:
+    print("Exception catched, removing not completed index.")
+    loop.run_until_complete(es_client.remove_index())
+    raise e
+finally:
+    loop.run_until_complete(es_client.close())
+    loop.close()

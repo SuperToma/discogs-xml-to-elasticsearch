@@ -2,49 +2,34 @@ properties:
   id:
     type: "integer"
     index: false
-  name:
-    type: "keyword"
+  main_release:
+    type: "integer"
     index: false
-  anv:
-    type: "keyword"
-    index: false
-  join:
-    type: "keyword"
-    index: false
-  role:
-    type: "keyword"
-    index: false
-  tracks:
-    type: "keyword"
-    index: false
+  artists:
+    properties:
+      id:
+        type: "integer"
+        index: false
+      name:
+        type: "keyword"
+        index: false
+      anv:
+        type: "keyword"
+        index: false
+      join:
+        type: "keyword"
+        index: false
+      role:
+        type: "keyword"
+        index: false
+      tracks:
+        type: "keyword"
+        index: false
   data_quality:
     type: "keyword"
     index: false
   genres:
     type: "keyword"
-    index: false
-  images:
-    properties:
-      width:
-        type: "integer"
-        index: false
-      object_type_name:
-        type: "keyword"
-        index: false
-      height:
-        type: "integer"
-        index: false
-      uri150:
-        type: "keyword"
-        index: false
-      imageType:
-        type: "keyword"
-        index: false
-      uri:
-        type: "keyword"
-        index: false
-  main_release:
-    type: "integer"
     index: false
   notes:
     type: "keyword"

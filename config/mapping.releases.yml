@@ -149,26 +149,6 @@ properties:
   genres:
     type: "keyword"
     index: false
-  images:
-    properties:
-      width:
-        type: "integer"
-        index: false
-      object_type_name:
-        type: "keyword"
-        index: false
-      height:
-        type: "integer"
-        index: false
-      uri150:
-        type: "keyword"
-        index: false
-      imageType:
-        type: "keyword"
-        index: false
-      uri:
-        type: "keyword"
-        index: false
   notes:
     type: "keyword"
     index: false

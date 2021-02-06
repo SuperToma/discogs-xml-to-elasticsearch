@@ -9,7 +9,7 @@ properties:
     properties:
       id:
         type: "integer"
-        index: false
+        index: true
       name:
         type: "keyword"
         index: false

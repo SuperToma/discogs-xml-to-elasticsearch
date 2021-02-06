@@ -35,7 +35,7 @@ discogs:
 
 types:
   artists:
-    id: "string(@id)"
+    id: "string(id)"
     name: "string(name)"
     realname: "string(realname)"
     profile: "string(profile)"
@@ -133,7 +133,7 @@ types:
     #  value: "string(@value)"
     genres: "genres/genre//text()"
     notes: "string(notes)"
-    styles: "c"
+    styles: "styles/style//text()"
     country: "string(country)"
     title: "string(title)"
     #videos:

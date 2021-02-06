@@ -46,6 +46,7 @@ class ESClient():
     def get_doc_single_bulk(self, doc: dict) -> dict:
         return {
             "_index": self.index_name,
+            "_id": doc["id"],
             "_source": doc
         }
 
